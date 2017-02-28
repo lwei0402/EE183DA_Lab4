@@ -55,42 +55,101 @@ MPU-6050 sensors contains an accelerometer and a gyro on a single chip. The gyro
 
 #### Sample code for getting raw values
 ```
-// MPU-6050 Short Example Sketch
-// By Arduino User JohnChi
-// August 17, 2014
-// Public Domain
-#include<Wire.h>
-const int MPU_addr=0x68;  // I2C address of the MPU-6050
-int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
-void setup(){
-  Wire.begin();
-  Wire.beginTransmission(MPU_addr);
-  Wire.write(0x6B);  // PWR_MGMT_1 register
-  Wire.write(0);     // set to zero (wakes up the MPU-6050)
-  Wire.endTransmission(true);
-  Serial.begin(9600);
-}
-void loop(){
-  Wire.beginTransmission(MPU_addr);
-  Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
+#include <Wire.h>
+#define MPUAddr 0x68
+
+int16_t ax,ay,az,gx,gy,gz;
+
+void setSleep(bool enable)
+{ 
+  Wire.beginTransmission(MPUAddr);
+  Serial.println("began trans");
+  Wire.write(0x6B);
   Wire.endTransmission(false);
-  Wire.requestFrom(MPU_addr,14,true);  // request a total of 14 registers
-  AcX=Wire.read()<<8|Wire.read();  // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)    
-  AcY=Wire.read()<<8|Wire.read();  // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
-  AcZ=Wire.read()<<8|Wire.read();  // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
-  Tmp=Wire.read()<<8|Wire.read();  // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
-  GyX=Wire.read()<<8|Wire.read();  // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
-  GyY=Wire.read()<<8|Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
-  GyZ=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
-  Serial.print("AcX = "); Serial.print(AcX);
-  Serial.print(" | AcY = "); Serial.print(AcY);
-  Serial.print(" | AcZ = "); Serial.print(AcZ);
-  Serial.print(" | Tmp = "); Serial.print(Tmp/340.00+36.53);  //equation for temperature in degrees C from datasheet
-  Serial.print(" | GyX = "); Serial.print(GyX);
-  Serial.print(" | GyY = "); Serial.print(GyY);
-  Serial.print(" | GyZ = "); Serial.println(GyZ);
-  delay(333);
+  Wire.requestFrom(MPUAddr, 1, true);
+  uint8_t power= Wire.read();
+  Serial.println("changing sleep bit");
+  power = (enable) ? (power | 0b01000000) : (power & 0b10111111);
+  Serial.println("setting sleep bit");
+  Wire.beginTransmission(MPUAddr);
+  Wire.write(0x6B);
+  Wire.write(power);
+  Wire.endTransmission(true);
 }
+
+void getAccelData(int16_t* ax, int16_t* ay, int16_t* az)
+{
+  Wire.beginTransmission(MPUAddr);
+  Wire.write(0x3B);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPUAddr, 6, true);
+  *ax = Wire.read() << 8 | Wire.read();
+  *ay = Wire.read() << 8 | Wire.read();
+  *az = Wire.read() << 8 | Wire.read();
+}
+
+void getGyroData(int16_t* gx, int16_t* gy, int16_t* gz)
+{
+  Wire.beginTransmission(MPUAddr);
+  Wire.write(0x43);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPUAddr, 6, true);
+  *gx = Wire.read() << 8 | Wire.read();
+  *gy = Wire.read() << 8 | Wire.read();
+  *gz = Wire.read() << 8 | Wire.read();
+}
+
+void setGyroPres(uint8_t val)
+{
+  val &= 0b11;
+  val = val << 3;
+  Wire.beginTransmission(MPUAddr);
+  Wire.write(0x1B);
+  Wire.write(val);
+  Wire.endTransmission(true);
+}
+
+
+void setAccelPres(uint8_t val)
+{
+  val &= 0b11;
+  val = val << 3;
+  Wire.beginTransmission(MPUAddr);
+  Wire.write(0x1C);
+  Wire.write(val);
+  Wire.endTransmission(true);
+}
+
+
+void setup() {
+    Wire.begin(12,13);
+    Serial.begin(9600);
+    Serial.println("initalizing");
+    Serial.println("setting sleep");
+    setSleep(false);   
+    Serial.println("done initalizing");
+    setGyroPres(0);
+}
+
+void loop() {
+//      Serial.println("in loop");
+        getAccelData(&ax, &ay, &az);
+        getGyroData(&gx, &gy, &gz);
+//      Serial.print("Ax: ");
+//      Serial.println(ax);
+//      Serial.print("Ay: ");
+//      Serial.println(ay);
+//      Serial.print("Az: ");
+//      Serial.println(az);
+//      
+//      Serial.print("Gx: ");
+//      Serial.println(gx);
+//      Serial.print("Gy: ");
+//      Serial.println(gy);
+        Serial.print("Gz: ");
+        Serial.println(gz);      
+        delay(500);
+  }
 ```
 
 #### Modeling of robot movement
