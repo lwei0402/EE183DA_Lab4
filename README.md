@@ -121,7 +121,8 @@ void setAccelPres(uint8_t val)
 }
 
 
-void setup() {
+void setup() 
+{
     Wire.begin(12,13);
     Serial.begin(9600);
     Serial.println("initalizing");
@@ -131,7 +132,8 @@ void setup() {
     setGyroPres(0);
 }
 
-void loop() {
+void loop() 
+{
 //      Serial.println("in loop");
         getAccelData(&ax, &ay, &az);
         getGyroData(&gx, &gy, &gz);
