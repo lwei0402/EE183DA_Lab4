@@ -109,7 +109,7 @@ Above equations represent the relationship of wheel velocities and total velocit
 
 Since we know PWM signals and wheel velocities follows a linear relation, we can represents robot states using our PWM signal inputs.
 
-<img src="img/velocity1.png" height="100">
+<img src="img/velocity1_fixed.jpeg" height="100">
 
 According to Kalman Filter, the final expression will look like
 
