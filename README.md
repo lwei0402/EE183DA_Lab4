@@ -35,16 +35,20 @@ The FC-51 infrared sensor is used to determine the rotation speed of each wheels
 ```
 #define IR 2  
 int detection = HIGH;    // no obstacle
-void setup() {
+void setup() 
+{
   Serial.begin(9600);  
   pinMode(IR, INPUT);
 }
-void loop() {  
+void loop() 
+{  
   detection = digitalRead(IR);
-  if(detection == LOW){
+  if(detection == LOW)
+  {
     Serial.print("There is an obstacle!\n");
   }
-  else{
+  else
+  {
     Serial.print("No obstacle!\n");
   }
   delay(500);    // in ms
