@@ -100,25 +100,25 @@ The movement of the robot can be modeled as a system with two controllable varia
 
 This figure(credited to https://www.researchgate.net/publication/232322023_Wireless_underwater_mobile_robot_system_based_on_ZigBee) represents our model for the system. By applying geometric rules, we can find the relationship between states of robot and velocities of the left and right wheels.
 
-<img src="img/vw.png" height="300">
-<img src="img/velocity3.png" height="300">
+<img src="img/vw.png" height="100">
+<img src="img/velocity3.png" height="100">
 
 Above equations represent the relationship of wheel velocities and total velocities(left equation) and relationship of robot states based on total velocities(right equation). Putting them together, we can generate the relationship of robotics states based on wheel velocities.
 
-<img src="img/velocity2.png" height="300">
+<img src="img/velocity2.png" height="100">
 
 Since we know PWM signals and wheel velocities follows a linear relation, we can represents robot states using our PWM signal inputs.
 
-<img src="img/velocity1.png" height="300">
+<img src="img/velocity1.png" height="100">
 
 According to Kalman Filter, the final expression will look like
 
-<img src="img/f.png" height="300">
+<img src="img/f.png" height="100">
 
 With Matrices **A** and **B** equal to:
 
-<img src="img/a.png" height="300">
-<img src="img/b.png" height="300">
+<img src="img/a.png" height="100">
+<img src="img/b.png" height="100">
 
 The vector on the left side of the equation represents six predicted states of our system:x position, y position, angle, x velocity, y velocity and angular velocity. Therefore, we can use the equation between previous states and next states to predict the state variables of the Kalman Filter.
 
