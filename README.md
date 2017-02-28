@@ -26,7 +26,7 @@ To use this API, the following hardware requirements have to be met:
 The two wheeled is based on the [paperbot project](https://git.uclalemur.com/mehtank/paperbot) The robot body is constructed by folding and cutting a printable paper chassis. Two continuous servos are connected to the MCU to maneuver the movement of the robot. By changing the rotation speeds of different servos, we can achieve movements in four directions, including: forward, backward, left and right. Controlling of the robot is implemented by a web server user interface allowing user to adjust the direction and speed of the movement. The whole system is powered by a portable battery placed inside the chassis through a micro-usb port.
 
 #### Picture of assembled robot
-![image](img/img.png?raw=true {height=100})
+![image](img/img.png?raw=true {height=100px})
 
 #### Sensors
 The FC-51 infrared sensor is used to determine the rotation speed of each wheels. Paper wheels has dark and bright color stripes on top of it. Infrared signal will be absorbed after hitting a dark surface. In contrast, bright color surface will reflect all infrared lights. The sensor is consisted of one infrared emitter, one infrared sensor and three pins for power and outputs. The emitter emits infrared light and the receiver can determine whether there are reflected lights to determine the existence of an obstacle. Three pins on the sensor represent Vcc, GND and outputs. Vcc and GND are used for powering the sensor itself, and the results of detection are transmitted to the MCU using the output pin. While the wheels are spinning, the receiver will see consecutively changing bright and dark colors, therefore we can calculate the speed of rotation by counting numbers of changes of dark and bright.
