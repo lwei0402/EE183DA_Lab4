@@ -26,7 +26,7 @@ To use this API, the following hardware requirements have to be met:
 The two wheeled is based on the [paperbot project](https://git.uclalemur.com/mehtank/paperbot) The robot body is constructed by folding and cutting a printable paper chassis. Two continuous servos are connected to the MCU to maneuver the movement of the robot. By changing the rotation speeds of different servos, we can achieve movements in four directions, including: forward, backward, left and right. Controlling of the robot is implemented by a web server user interface allowing user to adjust the direction and speed of the movement. The whole system is powered by a portable battery placed inside the chassis through a micro-usb port.
 
 #### Picture of assembled robot
-<img src="img/img.png" align="center" height="300">
+<img src="img/img.png" height="300">
 
 #### Sensors
 The FC-51 infrared sensor is used to determine the rotation speed of each wheels. Paper wheels has dark and bright color stripes on top of it. Infrared signal will be absorbed after hitting a dark surface. In contrast, bright color surface will reflect all infrared lights. The sensor is consisted of one infrared emitter, one infrared sensor and three pins for power and outputs. The emitter emits infrared light and the receiver can determine whether there are reflected lights to determine the existence of an obstacle. Three pins on the sensor represent Vcc, GND and outputs. Vcc and GND are used for powering the sensor itself, and the results of detection are transmitted to the MCU using the output pin. While the wheels are spinning, the receiver will see consecutively changing bright and dark colors, therefore we can calculate the speed of rotation by counting numbers of changes of dark and bright.
@@ -96,97 +96,59 @@ void loop(){
 #### Modeling of robot movement
 The movement of the robot can be modeled as a system with two controllable variables: velocities of left and right wheels.
 
-<img src="img/img.png" height="400">
+<img src="img/car.png" height="400">
+
+This figure(credited to https://www.researchgate.net/publication/232322023_Wireless_underwater_mobile_robot_system_based_on_ZigBee) represents our model for the system. By applying geometric rules, we can find the relationship between states of robot and velocities of the left and right wheels.
+
+<img src="img/vw.png" height="300">
+<img src="img/velocity3.png" height="300">
+
+Above equations represent the relationship of wheel velocities and total velocities(left equation) and relationship of robot states based on total velocities(right equation). Putting them together, we can generate the relationship of robotics states based on wheel velocities.
+
+<img src="img/velocity2.png" height="300">
+
+Since we know PWM signals and wheel velocities follows a linear relation, we can represents robot states using our PWM signal inputs.
+
+<img src="img/velocity1.png" height="300">
+
+According to Kalman Filter, the final expression will look like
+
+<img src="img/f.png" height="300">
+
+With Matrices **A** and **B** equal to:
+
+<img src="img/a.png" height="300">
+<img src="img/b.png" height="300">
+
+The vector on the left side of the equation represents six predicted states of our system:x position, y position, angle, x velocity, y velocity and angular velocity. Therefore, we can use the equation between previous states and next states to predict the state variables of the Kalman Filter.
+
+### Extended Kalman Filter
+For the purpose of this project, we implemented an Extended Kalman Filter to estimate the state of the Plant. The Extended Kalman Filter
+
+The Extended Kalman Filter we implemented uses six state variables for the robot in 2-DOF space: its location x, y and angle θ relative to the reference frame and velocities x’, y’, and θ’ representing the angular velocity of the robot.
+
+Two inputs are taken into the Plant of the system. PWM voltage of the servo on the left wheel , pwm1 and PWM voltage of the servo on the right wheel, pwm2. In order to estimate the states, we utilized three sensor measurement to implement the sensor fusion. Two FC-51 Infrared sensors used to measure the angular velocities of the two wheels and a MPU-6050 gyroscope for measuring the angle of the robot related to the absolute reference frame. The resulting state space description of the system is expressed as the follows:
+
+<img src="img/kalman.png" height="300">
+
+where xk is the 6-variable state vector and A is the homogeneous state transition matrix of the previous state. B is the state transition matrix of the input vector uk, which is a 2x1 matrix. Matrix C is the matrix of the observation regarding the current state. vk is the measurement processing noises.
+
+Pk is the predicted covariance estimate, and it’s a result of the state transition matrix A and the previous covariance estimate of the system.
+
+And finally Gk is the optimal Kalman gain, used to update the current state estimate xk
 
 
 
 
 
-
-
-### Implementation
-Include the ESP8266 WiFi library and Arduino Servo library
-```
-#include <ESP8266WiFi.h>
-#include <Servo.h>
-```
-
-Setup the web server confidentials and start the server.
-```
-WiFi.mode(WIFI_AP); //Our ESP8266-12E is an AccessPoint
-WiFi.softAP("kfan_esp", "110"); // Provide the (SSID, password); .
-server.begin(); // Start the HTTP Server
-
-//Looking under the hood
-Serial.begin(115200); //Start communication between the ESP8266-12E and the monitor window
-IPAddress HTTPS_ServerIP= WiFi.softAPIP(); // Obtain the IP of the Server
-Serial.print("Server IP is: "); // Print the IP to the monitor window
-Serial.println(HTTPS_ServerIP);
-```
-
-Initialize the servo and calibrate to 0
-```
-myservo.attach(D2);  // attaches the servo on pin 2 to the servo object
-myservo.write(0);
-```
-
-Checking connections.
-```
-WiFiClient client = server.available();
-if (!client) {
-  return;
-}
-//Looking under the hood
-Serial.println("Somebody has connected :)");
-
-//Read what the browser has sent into a String class and print the request to the monitor
-String request = client.readStringUntil('\r');
-//Looking under the hood
-Serial.println(request);
-```
-
-Handle HTTP requests and spin the servo when user press the piano key down in the web interface.
-```
-if (request.indexOf("/ON") != -1){
-  myservo.write(110);
-  delay(500);
-  myservo.write(0);
-}
-```
-
-Inject html code and inline style onto the web interface.
-```
-String s = "HTTP/1.1 200 OK\r\n";
-s += "Content-Type: text/html\r\n\r\n";
-s += "<!DOCTYPE HTML>\r\n<html>\r\n";
-s += "<button style=\"width: 100px; height: 500px; background: #fff; border: 3px solid #000; border-radius: 3px;\"><input value=\"Re\" type=\"button\" onclick=\"location.href='/ON'\"></button>";
-s += "</html>\n";
-```
-
-Handle HTTP requests and spin the servo when user press the piano key down in the web interface.
-```
-if (request.indexOf("/ON") != -1){
-  myservo.write(110);
-  delay(500);
-  myservo.write(0);
-}
-```
-
-Flush the stream and reset the client info
-```
-client.flush(); //clear previous info in the stream
-client.print(s); // Send the response to the client
-delay(1);
-Serial.println("Client disonnected"); //Looking under the hood
-```
-
-### TODO
- - Implement Arduino SD library to read html, css and javascript files into the board.  
- - 3D printing wrist and hand for the Robot Pianista.  
- - Multiple servos to simulate human hand.    
 
 ### Reference  
- * [Online virtual piano](http://piano-player.info)  
+ * [FC-51 Example](http://www.playembedded.org/blog/en/2016/01/08/detecting-obstacle-with-ir-sensor-and-arduino)  
+ * [MPU5060 Tutorial](http://playground.arduino.cc/Main/MPU-6050)  
+ * [Wireless underwater mobile robot system based on ZigBee](https://www.researchgate.net/publication/232322023_Wireless_underwater_mobile_robot_system_based_on_ZigBee)
+ * [Extended Kalman Filter](https://en.wikipedia.org/wiki/Extended_Kalman_filter)  
+ * [Kalman Filter Interactive Tutorial](http://home.wlu.edu/%7Elevys/kalman_tutorial/)  
+ * [TinyEKF API](https://github.com/simondlevy/TinyEKF)   
  * [ESP8266 motor shield diagram](http://amazingrobots.net/resources/motor_shield_diagram/)  
  * [ESP8266 board pin mappings](http://amazingrobots.net/resources/nodemcu_pinout/)  
  * [ESP8266-12E quick guide](http://ucla.mehtank.com/teaching/2016-17--02--ee183da/esp8266-12e-quick.pdf)  
